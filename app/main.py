@@ -1,15 +1,7 @@
 import socket  # noqa: F401
 from argparse import ArgumentParser
 import time
-
-
-def handle_request(request_buffer: bytes):
-    res = bytes()
-    correlation_id = int.from_bytes(request_buffer[8:12]).to_bytes(4, byteorder="big")
-    message_size = len(correlation_id).to_bytes(4, byteorder="big")
-    res += message_size
-    res += correlation_id
-    return res
+from .pub_server import handle_request
 
 def send_request(client_socket:socket.socket, addr):
     close = False
