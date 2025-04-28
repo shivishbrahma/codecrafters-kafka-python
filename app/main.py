@@ -2,16 +2,24 @@ import socket  # noqa: F401
 from argparse import ArgumentParser
 import time
 
+
+def handle_request(request_buffer: bytes):
+    res = bytes()
+    correlation_id = int.from_bytes(request_buffer[8:12]).to_bytes(4, byteorder="big")
+    message_size = len(correlation_id).to_bytes(4, byteorder="big")
+    res += message_size
+    res += correlation_id
+    return res
+
 def send_request(client_socket:socket.socket, addr):
     close = False
     while not close:
-        message_size = 0
-        correlation_id = 7
-        client_socket.sendall(
-            message_size.to_bytes(4, signed=True)
-            +
-            correlation_id.to_bytes(4, signed=True)
-        )
+        req_buff = client_socket.recv(1024)
+        if not req_buff:
+            close = True
+            break
+        print(f"Received req from {addr}")
+        client_socket.sendall(handle_request(req_buff))
         time.sleep(0.5)
 
     client_socket.close()
