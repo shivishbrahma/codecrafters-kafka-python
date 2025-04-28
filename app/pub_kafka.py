@@ -1,5 +1,57 @@
 from enum import Enum
 
+MIN_VERSION = 0
+MAX_VERSION = 4
+
+class APIKey(Enum):
+    Produce = 0
+    Fetch = 1
+    ListOffsets = 2
+    Metadata = 3
+    OffsetCommit = 8
+    OffsetFetch = 9
+    FindCoordinator = 10
+    JoinGroup = 11
+    Heartbeat = 12
+    LeaveGroup = 13
+    SyncGroup = 14
+    DescribeGroups = 15
+    ListGroups = 16
+    SaslHandshake = 17
+    ApiVersions = 18
+    CreateTopics = 19
+    DeleteTopics = 20
+    DeleteRecords = 21
+    InitProducerId = 22
+    OffsetForLeaderEpoch = 23
+    AddPartitionsToTxn = 24
+    AddOffsetsToTxn = 25
+    EndTxn = 26
+    WriteTxnMarkers = 27
+    TxnOffsetCommit = 28
+    DescribeAcls = 29
+    CreateAcls = 30
+    DeleteAcls = 31
+    DescribeConfigs = 32
+    AlterConfigs = 33
+    AlterReplicaLogDirs = 34
+    DescribeLogDirs = 35
+    SaslAuthenticate = 36
+    CreatePartitions = 37
+    CreateDelegationToken = 38
+    RenewDelegationToken = 39
+    ExpireDelegationToken = 40
+    DescribeDelegationToken = 41
+    DeleteGroups = 42
+    ElectLeader = 43
+
+    def get_min_version(self):
+        return MIN_VERSION
+    def get_max_version(self):
+        return MAX_VERSION
+    def __str__(self):
+        return f"{self.name}({self.value})"
+     
 class ErrorCode(Enum):
     UNKNOWN_SERVER_ERROR = -1
     NONE = 0
@@ -65,7 +117,7 @@ class ErrorCode(Enum):
     REASSIGNMENT_IN_PROGRESS = 60
 
     def to_bytes(self):
-        return self.value.to_bytes(2, byteorder='big')
+        return self.value.to_bytes(2)
    
     def __str__(self):
         return f"{self.name}({self.value})"
