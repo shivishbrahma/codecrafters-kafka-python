@@ -1,19 +1,22 @@
 import socket  # noqa: F401
 from argparse import ArgumentParser
 import time
+import threading
 from .pub_server import handle_request
 
 def send_request(client_socket:socket.socket, addr):
     close = False
     while not close:
         req_buff = client_socket.recv(1024)
+        print(f"Received req from {addr}")
         if not req_buff:
             close = True
             break
-        print(f"Received req from {addr}")
-        client_socket.sendall(handle_request(req_buff))
-        time.sleep(0.5)
 
+        res = handle_request(req_buff)
+        client_socket.sendall(res)
+        # time.sleep(0.5)
+    print("Client closed connection")
     client_socket.close()
 
 def start_server(server_socket: socket.socket):
@@ -21,7 +24,7 @@ def start_server(server_socket: socket.socket):
     while True:
         client_socket, addr = server_socket.accept()
         print(f"Connected to {addr}")
-        send_request(client_socket, addr)
+        threading.Thread(target=send_request, args=(client_socket, addr)).start()
 
 
 def main():
