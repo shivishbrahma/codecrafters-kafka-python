@@ -1,58 +1,103 @@
 from enum import Enum
+from dataclasses import dataclass
 
-MIN_VERSION = 0
-MAX_VERSION = 4
 
-class APIKey(Enum):
-    Produce = 0
-    Fetch = 1
-    ListOffsets = 2
-    Metadata = 3
-    OffsetCommit = 8
-    OffsetFetch = 9
-    FindCoordinator = 10
-    JoinGroup = 11
-    Heartbeat = 12
-    LeaveGroup = 13
-    SyncGroup = 14
-    DescribeGroups = 15
-    ListGroups = 16
-    SaslHandshake = 17
-    ApiVersions = 18
-    CreateTopics = 19
-    DeleteTopics = 20
-    DeleteRecords = 21
-    InitProducerId = 22
-    OffsetForLeaderEpoch = 23
-    AddPartitionsToTxn = 24
-    AddOffsetsToTxn = 25
-    EndTxn = 26
-    WriteTxnMarkers = 27
-    TxnOffsetCommit = 28
-    DescribeAcls = 29
-    CreateAcls = 30
-    DeleteAcls = 31
-    DescribeConfigs = 32
-    AlterConfigs = 33
-    AlterReplicaLogDirs = 34
-    DescribeLogDirs = 35
-    SaslAuthenticate = 36
-    CreatePartitions = 37
-    CreateDelegationToken = 38
-    RenewDelegationToken = 39
-    ExpireDelegationToken = 40
-    DescribeDelegationToken = 41
-    DeleteGroups = 42
-    ElectLeader = 43
+@dataclass
+class KafkaAPIKeyDetails:
+    api_key: int
+    min_version: int
+    max_version: int
+
+
+class KafkaAPIKey(Enum):
+    # Produce = 0
+    # Fetch = 1
+    # ListOffsets = 2
+    # Metadata = 3
+    # OffsetCommit = 8
+    # OffsetFetch = 9
+    # FindCoordinator = 10
+    # JoinGroup = 11
+    # Heartbeat = 12
+    # LeaveGroup = 13
+    # SyncGroup = 14
+    # DescribeGroups = 15
+    # ListGroups = 16
+    # SaslHandshake = 17
+    ApiVersions = KafkaAPIKeyDetails(api_key=18, min_version=0, max_version=4)
+    # CreateTopics = 19
+    # DeleteTopics = 20
+    # DeleteRecords = 21
+    # InitProducerId = 22
+    # OffsetForLeaderEpoch = 23
+    # AddPartitionsToTxn = 24
+    # AddOffsetsToTxn = 25
+    # EndTxn = 26
+    # WriteTxnMarkers = 27
+    # TxnOffsetCommit = 28
+    # DescribeAcls = 29
+    # CreateAcls = 30
+    # DeleteAcls = 31
+    # DescribeConfigs = 32
+    # AlterConfigs = 33
+    # AlterReplicaLogDirs = 34
+    # DescribeLogDirs = 35
+    # SaslAuthenticate = 36
+    # CreatePartitions = 37
+    # CreateDelegationToken = 38
+    # RenewDelegationToken = 39
+    # ExpireDelegationToken = 40
+    # DescribeDelegationToken = 41
+    # DeleteGroups = 42
+    # ElectLeader = 43
+    # IncrementalAlterConfigs = 44
+    # AlterPartitionReassignments = 45
+    # ListPartitionReassignments = 46
+    # OffsetDelete = 47
+    # DescribeClientQuotas = 48
+    # AlterClientQuotas = 49
+    # DescribeUserScramCredentials = 50
+    # AlterUserScramCredentials = 51
+    # DescribeQuorum = 55
+    # UpdateFeatures = 57
+    # DescribeCluster = 60
+    # DescribeProducers = 61
+    # UnregisterBroker = 64
+    # DescribeTransactions = 65
+    # ListTransactions = 66
+    # ConsumerGroupHeartbeat = 68
+    # ConsumerGroupDescribe = 69
+    # GetTelemetrySubscriptions = 71
+    # PushTelemetry = 72
+    # ListClientMetricsResources = 74
+    # DescribeTopicPartitions = 75
+    DescribeTopicPartitions = KafkaAPIKeyDetails(
+        api_key=75, min_version=0, max_version=0
+    )
+    # AddRaftVoter = 80
+    # RemoveRaftVoter = 81
 
     def get_min_version(self):
-        return MIN_VERSION
+        return self.value.min_version
+
     def get_max_version(self):
-        return MAX_VERSION
+        return self.value.max_version
+
+    @staticmethod
+    def from_code(code: int):
+        for key in KafkaAPIKey:
+            if key.value.api_key == code:
+                return key
+        raise KafkaException(
+            error_code=KafkaErrorCode.UNSUPPORTED_VERSION,
+            message="API Key is not supported",
+        )
+
     def __str__(self):
-        return f"{self.name}({self.value})"
-     
-class ErrorCode(Enum):
+        return f"{self.name}({self.value.api_key})"
+
+
+class KafkaErrorCode(Enum):
     UNKNOWN_SERVER_ERROR = -1
     NONE = 0
     OFFSET_OUT_OF_RANGE = 1
@@ -116,8 +161,15 @@ class ErrorCode(Enum):
     UNKNOWN_PRODUCER_ID = 59
     REASSIGNMENT_IN_PROGRESS = 60
 
-    def to_bytes(self):
-        return self.value.to_bytes(2)
-   
+    def to_bytes(self, length):
+        return self.value.to_bytes(length)
+
     def __str__(self):
-        return f"{self.name}({self.value})"
+        return f"[{self.name}-{self.value}]"
+
+
+class KafkaException(Exception):
+    def __init__(self, error_code: KafkaErrorCode, message: str, *args):
+        self.error_code = error_code
+        self.message = message
+        super().__init__(f"{str(error_code)}: {message}", *args)
