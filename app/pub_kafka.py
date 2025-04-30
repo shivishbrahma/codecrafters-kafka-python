@@ -1,6 +1,6 @@
 from enum import Enum
-from dataclasses import dataclass
-
+from dataclasses import dataclass,field
+from typing import List
 
 @dataclass
 class KafkaAPIKeyDetails:
@@ -88,13 +88,62 @@ class KafkaAPIKey(Enum):
         for key in KafkaAPIKey:
             if key.value.api_key == code:
                 return key
-        raise KafkaException(
-            error_code=KafkaErrorCode.UNSUPPORTED_VERSION,
-            message="API Key is not supported",
-        )
+        return None
 
     def __str__(self):
         return f"{self.name}({self.value.api_key})"
+
+
+@dataclass
+class KafkaAPIString:
+    length: int = 0
+    contents: str = ""
+
+    def __str__(self):
+        return f"\"{self.contents}\"({self.length})"
+
+
+@dataclass
+class KafkaAPIRequestBody:
+    client_id: KafkaAPIString = field(default_factory=KafkaAPIString)
+    client_software_version: KafkaAPIString = field(default_factory=KafkaAPIString)
+    topics: List[KafkaAPIString] = field(default_factory=list)
+    cursor: bytes = b"\x00"
+    response_partition_limit: int = field(default=0)
+
+    def __str__(self):
+        res = ""
+        if self.client_id.length > 0:
+            res += f"client_id={self.client_id}, "
+        if self.client_software_version.length > 0:
+            res += f"client_software_version={self.client_software_version}, "
+        if len(self.topics) > 0:
+            res += f"topics={self.topics}, "
+        if self.response_partition_limit > 0:
+            res += f"response_partition_limit={self.response_partition_limit}, "
+        if self.cursor != b"\x00":
+            res += f"cursor={self.cursor}, "
+        return f"({res[:-2]})"
+
+
+@dataclass
+class KafkaAPIRequest:
+    message_size: int
+    api_key: KafkaAPIKey
+    # api_version: int
+    correlation_id: int
+    client_id: KafkaAPIString
+    body: KafkaAPIRequestBody
+
+    def __str__(self):
+        res = ""
+        res += f"message_size={self.message_size}, "
+        res += f"api_key={self.api_key}, "
+        # res += f"api_version={self.api_version}, "
+        res += f"correlation_id={self.correlation_id}, "
+        res += f"client_id={self.client_id}, "
+        res += f"body={str(self.body)}"
+        return res
 
 
 class KafkaErrorCode(Enum):
@@ -165,7 +214,7 @@ class KafkaErrorCode(Enum):
         return self.value.to_bytes(length)
 
     def __str__(self):
-        return f"[{self.name}-{self.value}]"
+        return f"[{self.name} - {self.value}]"
 
 
 class KafkaException(Exception):
